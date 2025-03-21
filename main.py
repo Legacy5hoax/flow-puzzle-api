@@ -22,11 +22,14 @@ def home():
 
 @app.route("/generate_puzzle", methods=["POST"])
 def generate():
-    data = request.json
-    grid_size = data.get("grid_size", 5)
-    pairs = data.get("pairs", 3)
-    puzzle = generate_puzzle(grid_size, pairs)
-    return jsonify(puzzle)
+    try:
+        data = request.get_json()
+        grid_size = int(data.get("grid_size", 5))
+        pairs = int(data.get("pairs", 3))
+        puzzle = generate_puzzle(grid_size, pairs)
+        return jsonify(puzzle)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
 if name == "main":
     app.run(host="0.0.0.0", port=8080)
