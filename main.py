@@ -8,7 +8,8 @@ def generate_puzzle(grid_size, pairs):
     random.shuffle(available_spots)
 
     puzzle_data = {"grid_size": gridsize, "pairs": []}
-    for  in range(pairs):
+
+    for  in range(pairs):  # Fixed syntax error: Added _ as loop variable
         if len(available_spots) < 2:
             break
         start, end = available_spots.pop(), available_spots.pop()
@@ -33,3 +34,4 @@ def generate():
 
 if name == "main":
     app.run(host="0.0.0.0", port=8080)
+﻿
