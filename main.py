@@ -4,6 +4,7 @@ from collections import deque
 
 app = Flask(__name__)
 
+# Check if a path exists between start and end using a BFS (Breadth-First Search) approach
 def is_reachable(grid_size, start, end, occupied):
     """Check if there's a valid path between the start and end points, without crossing occupied cells."""
     visited = set()
@@ -22,6 +23,7 @@ def is_reachable(grid_size, start, end, occupied):
                     queue.append((nx, ny))
     return False
 
+# Place the path between the start and end points and mark the cells as occupied
 def place_path(grid_size, start, end, occupied):
     """Place a path between start and end, and mark the occupied cells."""
     visited = set()
@@ -66,29 +68,27 @@ def generate_puzzle(grid_size, pairs):
     retries = 0
     max_retries = 100  # Max retries for the entire process
 
+    # Try to generate pairs up to the maximum retry limit
     while retries < max_retries and len(puzzle_data["pairs"]) < pairs:
         valid_pair_found = False
-        attempts = 0
         pair_attempts = 0
 
-        # Try to generate the required number of pairs
         while pair_attempts < pairs and len(available_spots) >= 2:
             start = available_spots.pop()  # Pick a random start point
             end = available_spots.pop()    # Pick a random end point
 
-            # Try to find a valid path
+            # Try to find a valid path between start and end
             if is_reachable(grid_size, start, end, occupied):
                 # If a valid path exists, place the pair
                 if place_path(grid_size, start, end, occupied):
                     puzzle_data["pairs"].append({"start": start, "end": end})
                     valid_pair_found = True
                     pair_attempts += 1
-                    attempts = 0  # Reset attempts for the next pair
                     break
-            attempts += 1
 
+        # If no valid pair was found, retry by clearing the puzzle and retrying
         if not valid_pair_found:
-            retries += 1  # Increment retry count if no pair found
+            retries += 1  # Increment retry count if no valid pair found
             puzzle_data["pairs"] = []  # Clear the pairs and retry
             available_spots = [(x, y) for x in range(grid_size) for y in range(grid_size)]
             random.shuffle(available_spots)
