@@ -98,7 +98,13 @@ def generate():
         if pairs > max_pairs:
             return jsonify({"error": f"Requested number of pairs exceeds the maximum possible ({max_pairs}) for the given grid size."}), 400
         
+        print(f"Grid Size: {grid_size}, Requested Pairs: {pairs}, Max Pairs: {max_pairs}")  # Debugging info
         puzzle = generate_puzzle(grid_size, pairs)
+        
+        # If the puzzle generation returned an error response, return it as JSON
+        if 'error' in puzzle:
+            return jsonify(puzzle), 400
+
         return jsonify(puzzle)
     
     except Exception as e:
