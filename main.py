@@ -108,6 +108,7 @@ def generate():
             return jsonify(puzzle), 400
 
         return jsonify(puzzle)
+
     
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 400
