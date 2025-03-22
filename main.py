@@ -4,8 +4,8 @@ from collections import deque
 
 app = Flask(__name__)
 
-def is_reachable(grid_size, start, end):
-    """Check if there's a valid path between the start and end points in the grid."""
+def is_reachable(grid_size, start, end, occupied):
+    """Check if there's a valid path between the start and end points, without crossing occupied cells."""
     visited = set()
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, Down, Left, Right
     queue = deque([start])
@@ -14,12 +14,35 @@ def is_reachable(grid_size, start, end):
         x, y = queue.popleft()
         if (x, y) == end:
             return True
-        if (x, y) not in visited:
+        if (x, y) not in visited and (x, y) not in occupied:
             visited.add((x, y))
             for dx, dy in directions:
                 nx, ny = x + dx, y + dy
-                if 0 <= nx < grid_size and 0 <= ny < grid_size and (nx, ny) not in visited:
+                if 0 <= nx < grid_size and 0 <= ny < grid_size:
                     queue.append((nx, ny))
+    return False
+
+def place_path(grid_size, start, end, occupied):
+    """Place a path between start and end, and mark the occupied cells."""
+    visited = set()
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, Down, Left, Right
+    queue = deque([(start, [])])
+
+    while queue:
+        (x, y), path = queue.popleft()
+        if (x, y) == end:
+            # Mark the path as occupied
+            for px, py in path + [(x, y)]:
+                occupied.add((px, py))
+            return True
+
+        if (x, y) not in visited and (x, y) not in occupied:
+            visited.add((x, y))
+            for dx, dy in directions:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < grid_size and 0 <= ny < grid_size:
+                    queue.append(((nx, ny), path + [(x, y)]))
+
     return False
 
 def generate_puzzle(grid_size, pairs):
@@ -27,20 +50,23 @@ def generate_puzzle(grid_size, pairs):
     random.shuffle(available_spots)
 
     puzzle_data = {"grid_size": grid_size, "pairs": []}
-    
+    occupied = set()
+
     for _ in range(pairs):
         if len(available_spots) < 2:
             break
         start = available_spots.pop()
         end = available_spots.pop()
 
-        # Ensure the start and end points are connected
-        while not is_reachable(grid_size, start, end):
+        # Ensure the start and end points are connected without overlapping paths
+        while not is_reachable(grid_size, start, end, occupied):
             random.shuffle(available_spots)  # Reshuffle available spots to try again
             start = available_spots.pop()
             end = available_spots.pop()
 
-        puzzle_data["pairs"].append({"start": start, "end": end})
+        # Place the path and mark occupied cells
+        if place_path(grid_size, start, end, occupied):
+            puzzle_data["pairs"].append({"start": start, "end": end})
 
     return puzzle_data
 
