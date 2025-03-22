@@ -49,7 +49,7 @@ def generate_puzzle(grid_size, pairs):
     total_cells = grid_size * grid_size
     max_pairs = total_cells // 2
 
-    # Ensure requested pairs don't exceed the maximum pairs
+    # Ensure requested pairs don't exceed the maximum possible pairs
     if pairs > max_pairs:
         return {"error": f"Requested pairs exceed the maximum possible pairs for this grid size: {max_pairs}"}, 400
 
@@ -68,7 +68,7 @@ def generate_puzzle(grid_size, pairs):
         valid_pair_found = False
         attempts = 0
 
-        while not valid_pair_found and attempts < 10:  # Attempt up to 10 times
+        while not valid_pair_found and attempts < 10:  # Attempt up to 10 times to find a valid pair
             start = available_spots.pop()
             end = available_spots.pop()
 
@@ -97,10 +97,13 @@ def generate():
         grid_size = int(data.get("grid_size", 5))
         pairs = int(data.get("pairs", 3))
 
+        print(f"Received request with grid_size={grid_size}, pairs={pairs}")  # Debugging line
+
         # Ensure the number of pairs doesn't exceed the max possible pairs
         total_cells = grid_size * grid_size
         max_pairs = total_cells // 2
         if pairs > max_pairs:
+            print(f"Error: Requested pairs exceed the maximum possible pairs for this grid size: {max_pairs}")  # Debugging line
             return jsonify({"error": f"Requested pairs exceed the maximum possible pairs for this grid size: {max_pairs}"}), 400
         
         puzzle = generate_puzzle(grid_size, pairs)
@@ -108,9 +111,9 @@ def generate():
             return jsonify(puzzle), 400
 
         return jsonify(puzzle)
-
     
     except Exception as e:
+        print(f"Error: {str(e)}")  # Debugging line
         return jsonify({"error": f"An error occurred: {str(e)}"}), 400
 
 if __name__ == "__main__":
