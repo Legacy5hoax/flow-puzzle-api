@@ -52,6 +52,14 @@ def generate_puzzle(grid_size, pairs):
     puzzle_data = {"grid_size": grid_size, "pairs": []}
     occupied = set()
 
+    # Calculate the maximum number of pairs possible based on grid size
+    max_pairs = (grid_size * grid_size) // 2
+
+    # If the requested number of pairs exceeds the maximum possible pairs, adjust it
+    if pairs > max_pairs:
+        pairs = max_pairs
+        print(f"Requested number of pairs exceeds the maximum. Adjusting to {pairs} pairs.")
+
     for _ in range(pairs):
         if len(available_spots) < 2:
             break
@@ -66,7 +74,7 @@ def generate_puzzle(grid_size, pairs):
 
         # Place the path and mark occupied cells
         if place_path(grid_size, start, end, occupied):
-            puzzle_data["pairs"].append({"start": start, "End": end})
+            puzzle_data["pairs"].append({"start": start, "end": end})
 
     return puzzle_data
 
