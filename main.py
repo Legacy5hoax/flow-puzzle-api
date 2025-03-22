@@ -63,19 +63,32 @@ def generate_puzzle(grid_size, pairs):
 
     print(f"Generating puzzle with grid size: {grid_size} and {pairs} pairs")
 
+    # We try to place pairs, but first check that we have enough spots available
+    if len(available_spots) < 2 * pairs:
+        return {"error": "Not enough available spots to create the requested number of pairs."}, 400
+
+    # Attempt to place each pair
     for _ in range(pairs):
         if len(available_spots) < 2:
-            break
+            return {"error": "Not enough spots available to place more pairs."}, 400
+
+        # Select a random pair of spots
         start = available_spots.pop()
         end = available_spots.pop()
 
         # Ensure the start and end points are connected without overlapping paths
-        while not is_reachable(grid_size, start, end, occupied):
+        retry_attempts = 0
+        while not is_reachable(grid_size, start, end, occupied) and retry_attempts < 10:
+            print(f"Retrying pair placement. Attempts: {retry_attempts}")
             if len(available_spots) < 2:
                 return {"error": "Not enough available spots to create valid paths."}, 400
             random.shuffle(available_spots)  # Reshuffle available spots to try again
             start = available_spots.pop()
             end = available_spots.pop()
+            retry_attempts += 1
+
+        if retry_attempts >= 10:
+            return {"error": "Unable to find valid path for some pairs. Grid size might be too small."}, 400
 
         # Place the path and mark occupied cells
         if place_path(grid_size, start, end, occupied):
