@@ -66,7 +66,7 @@ def generate_puzzle(grid_size, pairs):
 
         # Place the path and mark occupied cells
         if place_path(grid_size, start, end, occupied):
-            puzzle_data["pairs"].append({"start": start, "end": end})
+            puzzle_data["pairs"].append({"start": start, "End": end})
 
     return puzzle_data
 
