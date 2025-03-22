@@ -63,25 +63,40 @@ def generate_puzzle(grid_size, pairs):
     if len(available_spots) < 2 * pairs:
         return {"error": "Not enough available spots to create the requested number of pairs."}, 400
 
-    for _ in range(pairs):
-        # Try finding valid start and end points
+    # Retry mechanism to keep trying if no valid path is found
+    max_retries = 100  # Max retries for the entire process (to avoid infinite loops)
+    retries = 0
+
+    while retries < max_retries and len(puzzle_data["pairs"]) < pairs:
         valid_pair_found = False
         attempts = 0
+        pair_attempts = 0
 
-        while not valid_pair_found and attempts < 10:  # Attempt up to 10 times to find a valid pair
-            start = available_spots.pop()
-            end = available_spots.pop()
+        # Try to generate the required number of pairs
+        while pair_attempts < pairs and attempts < 10:
+            start = available_spots.pop()  # Pick a random start point
+            end = available_spots.pop()    # Pick a random end point
 
-            # Ensure a valid path exists for the pair
+            # Try to find a valid path
             if is_reachable(grid_size, start, end, occupied):
-                # Place the path and occupy the cells
+                # If a valid path exists, place the pair
                 if place_path(grid_size, start, end, occupied):
                     puzzle_data["pairs"].append({"start": start, "end": end})
                     valid_pair_found = True
+                    pair_attempts += 1
+                    attempts = 0  # Reset attempts for the next pair
+                    break
             attempts += 1
 
         if not valid_pair_found:
-            return {"error": "Unable to find valid paths for all pairs."}, 400
+            retries += 1  # Increment retry count if no pair found
+            puzzle_data["pairs"] = []  # Clear the pairs and retry
+            available_spots = [(x, y) for x in range(grid_size) for y in range(grid_size)]
+            random.shuffle(available_spots)
+            occupied = set()  # Reset the occupied cells as well
+
+    if retries >= max_retries:
+        return {"error": "Unable to find valid paths after multiple retries. Try with fewer pairs."}, 400
 
     return puzzle_data
 
