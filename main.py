@@ -64,19 +64,24 @@ def generate_puzzle(grid_size, pairs):
         return {"error": "Not enough available spots to create the requested number of pairs."}, 400
 
     for _ in range(pairs):
-        if len(available_spots) < 2:
-            return {"error": "Not enough spots available to place more pairs."}, 400
+        # Try finding valid start and end points
+        valid_pair_found = False
+        attempts = 0
 
-        start = available_spots.pop()
-        end = available_spots.pop()
+        while not valid_pair_found and attempts < 10:  # Attempt up to 10 times
+            start = available_spots.pop()
+            end = available_spots.pop()
 
-        # Ensure a valid path exists for the pair
-        if not is_reachable(grid_size, start, end, occupied):
-            return {"error": "Unable to find a valid path between the start and end."}, 400
+            # Ensure a valid path exists for the pair
+            if is_reachable(grid_size, start, end, occupied):
+                # Place the path and occupy the cells
+                if place_path(grid_size, start, end, occupied):
+                    puzzle_data["pairs"].append({"start": start, "end": end})
+                    valid_pair_found = True
+            attempts += 1
 
-        # Place the path and occupy the cells
-        if place_path(grid_size, start, end, occupied):
-            puzzle_data["pairs"].append({"start": start, "end": end})
+        if not valid_pair_found:
+            return {"error": "Unable to find valid paths for all pairs."}, 400
 
     return puzzle_data
 
