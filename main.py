@@ -4,9 +4,8 @@ from collections import deque
 
 app = Flask(__name__)
 
-# Check if a path exists between start and end using a BFS (Breadth-First Search) approach
+# Function to check if a path exists between start and end using BFS
 def is_reachable(grid_size, start, end, occupied):
-    """Check if there's a valid path between the start and end points, without crossing occupied cells."""
     visited = set()
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, Down, Left, Right
     queue = deque([start])
@@ -23,30 +22,27 @@ def is_reachable(grid_size, start, end, occupied):
                     queue.append((nx, ny))
     return False
 
-# Place the path between the start and end points and mark the cells as occupied
+# Function to simulate placing a path and marking cells as occupied
 def place_path(grid_size, start, end, occupied):
-    """Place a path between start and end, and mark the occupied cells."""
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
     visited = set()
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, Down, Left, Right
     queue = deque([(start, [])])
 
     while queue:
         (x, y), path = queue.popleft()
         if (x, y) == end:
-            # Mark the path as occupied
             for px, py in path + [(x, y)]:
-                occupied.add((px, py))
+                occupied.add((px, py))  # Mark all cells in the path as occupied
             return True
-
         if (x, y) not in visited and (x, y) not in occupied:
             visited.add((x, y))
             for dx, dy in directions:
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < grid_size and 0 <= ny < grid_size:
                     queue.append(((nx, ny), path + [(x, y)]))
-
     return False
 
+# Function to generate a puzzle, checking if the path is solvable
 def generate_puzzle(grid_size, pairs):
     total_cells = grid_size * grid_size
     max_pairs = total_cells // 2
@@ -67,7 +63,6 @@ def generate_puzzle(grid_size, pairs):
 
     def backtrack(pair_idx):
         """Try to place pairs, backtracking if a configuration isn't valid."""
-        # If all pairs are placed successfully, return True
         if pair_idx == pairs:
             return True
 
@@ -79,11 +74,9 @@ def generate_puzzle(grid_size, pairs):
 
                 # Check if this start-end pair is reachable and solvable
                 if is_reachable(grid_size, start, end, occupied):
-                    # Try placing the path
                     if place_path(grid_size, start, end, occupied):
-                        # Save this pair
                         puzzle_data["pairs"].append({"start": start, "end": end})
-                        
+
                         # Recurse to place the next pair
                         if backtrack(pair_idx + 1):
                             return True
