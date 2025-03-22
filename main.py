@@ -63,9 +63,8 @@ def generate_puzzle(grid_size, pairs):
     if len(available_spots) < 2 * pairs:
         return {"error": "Not enough available spots to create the requested number of pairs."}, 400
 
-    # Retry mechanism to keep trying if no valid path is found
-    max_retries = 100  # Max retries for the entire process (to avoid infinite loops)
     retries = 0
+    max_retries = 100  # Max retries for the entire process
 
     while retries < max_retries and len(puzzle_data["pairs"]) < pairs:
         valid_pair_found = False
@@ -73,7 +72,7 @@ def generate_puzzle(grid_size, pairs):
         pair_attempts = 0
 
         # Try to generate the required number of pairs
-        while pair_attempts < pairs and attempts < 10:
+        while pair_attempts < pairs and len(available_spots) >= 2:
             start = available_spots.pop()  # Pick a random start point
             end = available_spots.pop()    # Pick a random end point
 
@@ -112,13 +111,10 @@ def generate():
         grid_size = int(data.get("grid_size", 5))
         pairs = int(data.get("pairs", 3))
 
-        print(f"Received request with grid_size={grid_size}, pairs={pairs}")  # Debugging line
-
         # Ensure the number of pairs doesn't exceed the max possible pairs
         total_cells = grid_size * grid_size
         max_pairs = total_cells // 2
         if pairs > max_pairs:
-            print(f"Error: Requested pairs exceed the maximum possible pairs for this grid size: {max_pairs}")  # Debugging line
             return jsonify({"error": f"Requested pairs exceed the maximum possible pairs for this grid size: {max_pairs}"}), 400
         
         puzzle = generate_puzzle(grid_size, pairs)
@@ -128,7 +124,6 @@ def generate():
         return jsonify(puzzle)
     
     except Exception as e:
-        print(f"Error: {str(e)}")  # Debugging line
         return jsonify({"error": f"An error occurred: {str(e)}"}), 400
 
 if __name__ == "__main__":
