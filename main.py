@@ -22,7 +22,7 @@ def is_reachable(grid_size, start, end, occupied):
                     queue.append((nx, ny))
     return False
 
-# Function to simulate placing a path and marking cells as occupied
+# Function to mark the path as occupied
 def place_path(grid_size, start, end, occupied):
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
     visited = set()
@@ -31,8 +31,9 @@ def place_path(grid_size, start, end, occupied):
     while queue:
         (x, y), path = queue.popleft()
         if (x, y) == end:
+            # Mark all cells in the path as occupied
             for px, py in path + [(x, y)]:
-                occupied.add((px, py))  # Mark all cells in the path as occupied
+                occupied.add((px, py))
             return True
         if (x, y) not in visited and (x, y) not in occupied:
             visited.add((x, y))
@@ -42,7 +43,7 @@ def place_path(grid_size, start, end, occupied):
                     queue.append(((nx, ny), path + [(x, y)]))
     return False
 
-# Function to generate a puzzle with valid paths
+# Function to generate a solvable puzzle
 def generate_puzzle(grid_size, pairs):
     total_cells = grid_size * grid_size
     max_pairs = total_cells // 2
@@ -61,36 +62,23 @@ def generate_puzzle(grid_size, pairs):
     if len(available_spots) < 2 * pairs:
         return {"error": "Not enough available spots to create the requested number of pairs."}, 400
 
-    def backtrack(pair_idx):
-        """Try to place pairs, backtracking if a configuration isn't valid."""
-        if pair_idx == pairs:
-            return True
-
-        # Try placing the pair at index `pair_idx`
-        for i in range(len(available_spots)):
-            for j in range(i + 1, len(available_spots)):
-                start = available_spots[i]
-                end = available_spots[j]
-
-                # Check if this start-end pair is reachable and solvable
+    # Try to place each pair
+    for _ in range(pairs):
+        placed = False
+        attempts = 0
+        while not placed and attempts < 100:  # Limit the attempts to avoid infinite loops
+            start, end = random.sample(available_spots, 2)  # Get two random spots
+            # Ensure no overlap
+            if start not in occupied and end not in occupied:
+                # Check if a valid path exists between start and end
                 if is_reachable(grid_size, start, end, occupied):
                     if place_path(grid_size, start, end, occupied):
                         puzzle_data["pairs"].append({"start": start, "end": end})
-
-                        # Recurse to place the next pair
-                        if backtrack(pair_idx + 1):
-                            return True
-
-                        # If placing this pair didn't work, undo the placement (backtrack)
-                        puzzle_data["pairs"].pop()
-                        occupied.remove(start)
-                        occupied.remove(end)
-
-        return False
-
-    # Start the backtracking process
-    if not backtrack(0):
-        return {"error": "Unable to find a solvable puzzle. Try with fewer pairs."}, 400
+                        placed = True
+            attempts += 1
+        
+        if not placed:
+            return {"error": "Unable to place all pairs with no overlap. Try reducing the number of pairs."}, 400
 
     return puzzle_data
 
