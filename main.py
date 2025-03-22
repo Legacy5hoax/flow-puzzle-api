@@ -61,6 +61,8 @@ def generate_puzzle(grid_size, pairs):
     if pairs > max_pairs:
         return {"error": f"Requested number of pairs exceeds the maximum ({max_pairs}) for the given grid size."}, 400
 
+    print(f"Generating puzzle with grid size: {grid_size} and {pairs} pairs")
+
     for _ in range(pairs):
         if len(available_spots) < 2:
             break
@@ -79,6 +81,7 @@ def generate_puzzle(grid_size, pairs):
         if place_path(grid_size, start, end, occupied):
             puzzle_data["pairs"].append({"start": start, "end": end})
 
+    print("Puzzle generated:", puzzle_data)
     return puzzle_data
 
 @app.route("/", methods=["GET"])
@@ -88,9 +91,17 @@ def home():
 @app.route("/generate_puzzle", methods=["POST"])
 def generate():
     try:
+        # Parse the request JSON data
         data = request.get_json()
-        grid_size = int(data.get("grid_size", 5))
-        pairs = int(data.get("pairs", 3))
+
+        # Debugging print to check if the incoming data is valid
+        print("Incoming data:", data)
+
+        grid_size = int(data.get("grid_size", 5))  # Default to 5 if not provided
+        pairs = int(data.get("pairs", 3))          # Default to 3 if not provided
+
+        # Debugging print to check the grid_size and pairs
+        print(f"Grid Size: {grid_size}, Pairs: {pairs}")
 
         # Early validation: Ensure requested pairs don't exceed max pairs
         total_cells = grid_size * grid_size
@@ -98,16 +109,16 @@ def generate():
         if pairs > max_pairs:
             return jsonify({"error": f"Requested number of pairs exceeds the maximum possible ({max_pairs}) for the given grid size."}), 400
         
-        print(f"Grid Size: {grid_size}, Requested Pairs: {pairs}, Max Pairs: {max_pairs}")  # Debugging info
         puzzle = generate_puzzle(grid_size, pairs)
-        
-        # If the puzzle generation returned an error response, return it as JSON
+
+        # Check if an error was returned in puzzle data
         if 'error' in puzzle:
             return jsonify(puzzle), 400
 
         return jsonify(puzzle)
-    
+
     except Exception as e:
+        print(f"Error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 400
 
 if __name__ == "__main__":
