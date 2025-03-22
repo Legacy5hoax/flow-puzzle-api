@@ -65,37 +65,39 @@ def generate_puzzle(grid_size, pairs):
     if len(available_spots) < 2 * pairs:
         return {"error": "Not enough available spots to create the requested number of pairs."}, 400
 
-    retries = 0
-    max_retries = 100  # Max retries for the entire process
+    def backtrack(pair_idx):
+        """Try to place pairs, backtracking if a configuration isn't valid."""
+        # If all pairs are placed successfully, return True
+        if pair_idx == pairs:
+            return True
 
-    # Try to generate pairs up to the maximum retry limit
-    while retries < max_retries and len(puzzle_data["pairs"]) < pairs:
-        valid_pair_found = False
-        pair_attempts = 0
+        # Try placing the pair at index `pair_idx`
+        for i in range(len(available_spots)):
+            for j in range(i + 1, len(available_spots)):
+                start = available_spots[i]
+                end = available_spots[j]
 
-        while pair_attempts < pairs and len(available_spots) >= 2:
-            start = available_spots.pop()  # Pick a random start point
-            end = available_spots.pop()    # Pick a random end point
+                # Check if this start-end pair is reachable and solvable
+                if is_reachable(grid_size, start, end, occupied):
+                    # Try placing the path
+                    if place_path(grid_size, start, end, occupied):
+                        # Save this pair
+                        puzzle_data["pairs"].append({"start": start, "end": end})
+                        
+                        # Recurse to place the next pair
+                        if backtrack(pair_idx + 1):
+                            return True
 
-            # Try to find a valid path between start and end
-            if is_reachable(grid_size, start, end, occupied):
-                # If a valid path exists, place the pair
-                if place_path(grid_size, start, end, occupied):
-                    puzzle_data["pairs"].append({"start": start, "end": end})
-                    valid_pair_found = True
-                    pair_attempts += 1
-                    break
+                        # If placing this pair didn't work, undo the placement (backtrack)
+                        puzzle_data["pairs"].pop()
+                        occupied.remove(start)
+                        occupied.remove(end)
 
-        # If no valid pair was found, retry by clearing the puzzle and retrying
-        if not valid_pair_found:
-            retries += 1  # Increment retry count if no valid pair found
-            puzzle_data["pairs"] = []  # Clear the pairs and retry
-            available_spots = [(x, y) for x in range(grid_size) for y in range(grid_size)]
-            random.shuffle(available_spots)
-            occupied = set()  # Reset the occupied cells as well
+        return False
 
-    if retries >= max_retries:
-        return {"error": "Unable to find valid paths after multiple retries. Try with fewer pairs."}, 400
+    # Start the backtracking process
+    if not backtrack(0):
+        return {"error": "Unable to find a solvable puzzle. Try with fewer pairs."}, 400
 
     return puzzle_data
 
