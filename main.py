@@ -52,13 +52,14 @@ def generate_puzzle(grid_size, pairs):
     puzzle_data = {"grid_size": grid_size, "pairs": []}
     occupied = set()
 
+    # Calculate the total number of cells in the grid
+    total_cells = grid_size * grid_size
     # Calculate the maximum number of pairs possible based on grid size
-    max_pairs = (grid_size * grid_size) // 2
+    max_pairs = total_cells // 2
 
     # If the requested number of pairs exceeds the maximum possible pairs, adjust it
     if pairs > max_pairs:
-        pairs = max_pairs
-        print(f"Requested number of pairs exceeds the maximum. Adjusting to {pairs} pairs.")
+        return {"error": f"Requested number of pairs exceeds the maximum ({max_pairs}) for the given grid size."}, 400
 
     for _ in range(pairs):
         if len(available_spots) < 2:
@@ -68,6 +69,8 @@ def generate_puzzle(grid_size, pairs):
 
         # Ensure the start and end points are connected without overlapping paths
         while not is_reachable(grid_size, start, end, occupied):
+            if len(available_spots) < 2:
+                return {"error": "Not enough available spots to create valid paths."}, 400
             random.shuffle(available_spots)  # Reshuffle available spots to try again
             start = available_spots.pop()
             end = available_spots.pop()
@@ -88,8 +91,16 @@ def generate():
         data = request.get_json()
         grid_size = int(data.get("grid_size", 5))
         pairs = int(data.get("pairs", 3))
+
+        # Early validation: Ensure requested pairs don't exceed max pairs
+        total_cells = grid_size * grid_size
+        max_pairs = total_cells // 2
+        if pairs > max_pairs:
+            return jsonify({"error": f"Requested number of pairs exceeds the maximum possible ({max_pairs}) for the given grid size."}), 400
+        
         puzzle = generate_puzzle(grid_size, pairs)
         return jsonify(puzzle)
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
