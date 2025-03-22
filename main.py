@@ -42,7 +42,7 @@ def place_path(grid_size, start, end, occupied):
                     queue.append(((nx, ny), path + [(x, y)]))
     return False
 
-# Function to generate a puzzle, checking if the path is solvable
+# Function to generate a puzzle with valid paths
 def generate_puzzle(grid_size, pairs):
     total_cells = grid_size * grid_size
     max_pairs = total_cells // 2
