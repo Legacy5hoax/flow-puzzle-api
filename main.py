@@ -46,11 +46,10 @@ def place_path(grid_size, start, end, occupied):
     return False
 
 def generate_puzzle(grid_size, pairs):
-    # Calculate the maximum possible pairs that can fit within the grid
     total_cells = grid_size * grid_size
     max_pairs = total_cells // 2
 
-    # Early validation: Ensure requested pairs don't exceed max pairs
+    # Ensure requested pairs don't exceed the maximum pairs
     if pairs > max_pairs:
         return {"error": f"Requested pairs exceed the maximum possible pairs for this grid size: {max_pairs}"}, 400
 
@@ -60,7 +59,7 @@ def generate_puzzle(grid_size, pairs):
     puzzle_data = {"grid_size": grid_size, "pairs": []}
     occupied = set()
 
-    # Validate that we have enough available spots for the pairs
+    # Check if there are enough available spots
     if len(available_spots) < 2 * pairs:
         return {"error": "Not enough available spots to create the requested number of pairs."}, 400
 
@@ -71,11 +70,11 @@ def generate_puzzle(grid_size, pairs):
         start = available_spots.pop()
         end = available_spots.pop()
 
-        # Ensure we can connect the start and end without overlapping paths
+        # Ensure a valid path exists for the pair
         if not is_reachable(grid_size, start, end, occupied):
             return {"error": "Unable to find a valid path between the start and end."}, 400
 
-        # Mark the path and occupy the cells
+        # Place the path and occupy the cells
         if place_path(grid_size, start, end, occupied):
             puzzle_data["pairs"].append({"start": start, "end": end})
 
